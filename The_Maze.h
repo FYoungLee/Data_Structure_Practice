@@ -36,6 +36,8 @@ int main() {
 #include <vector>
 #include <unistd.h>
 using namespace std;
+
+/*      location nodes    */
 struct loc {
     int j, i;
     int road;
@@ -55,7 +57,7 @@ struct loc {
         return os;
     }
 };
-
+/*      location stack            */
 class LocStack {
     loc *top;
 public:
@@ -89,6 +91,8 @@ loc LocStack::getTopVal() {
     return *top;
 }
 
+
+/*      the maze class      */
 class killMaze {
     vector<vector<int>> map;
     loc entrance, exit;
@@ -97,10 +101,10 @@ class killMaze {
     void cur_loc_chk(loc&);
 public:
     killMaze(const vector<vector<int>>& m, loc entr, loc ex);
-    void display();
-    bool getPath();
-    void viewPath();
-    bool goUp(loc&);
+    void display();     // display current map.
+    bool getPath();     // figure out how to exit the maze, return false if there is no way to get out.
+    void viewPath();    // report the path to exit.
+    bool goUp(loc&);    // move operations.
     bool goDown(loc&);
     bool goLeft(loc&);
     bool goRight(loc&);
