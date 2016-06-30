@@ -47,7 +47,7 @@ public:
     bool deque();
     void add_pre(loc *pl); // record previous node.
     loc *getStep() { return step; }
-    void nextStep() { step = step->next; }
+    bool nextStep();
     const loc* stepToExit();    //when finished path use this method to make step pointer point to last node.
     const loc* stepPre();   //depend on record this method will find previous step node.
 };
@@ -88,6 +88,14 @@ bool LocQueue::deque() {
 
 void LocQueue::add_pre(loc *pl) {
     rear->pre = pl;
+}
+
+bool LocQueue::nextStep() {
+    if (step != rear) {
+        step = step->next;
+        return true;
+    }
+    else return false;
 }
 
 const loc* LocQueue::stepToExit() {
@@ -163,8 +171,11 @@ bool killMaze::getPath() {
         if (goUp(start) || goRight(start) || goDown(start) || goLeft(start)){
             pathLog.push(start);
             pathLog.add_pre(p);
-        } else                      // if there is nowhere to go, then make step pointer point to next node.
-            pathLog.nextStep();
+        } else if (!pathLog.nextStep()) {           // if there is nowhere to go, then make step pointer point to next node.
+            display();
+            cerr<< "No Way\n";
+            return false;
+        }
     }
     viewPath();
     cout << "WIN!\n";
