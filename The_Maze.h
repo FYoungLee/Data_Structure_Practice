@@ -62,11 +62,17 @@ class LocStack {
     loc *top;
 public:
     LocStack(): top(nullptr) {}
+    ~LocStack();
     void add(const loc& l);
     bool pop();
     bool isEmpty();
     loc getTopVal();
 };
+
+void LocStack::~LocStack() {
+    while (top)
+        pop();
+}
 
 void LocStack::add(const loc &l) {
     loc *nl = new loc(l.j, l.i, l.road);
