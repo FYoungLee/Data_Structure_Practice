@@ -38,29 +38,84 @@ int main() {
 using namespace std;
 struct loc {
     int j, i;
-    loc(int y, int x): j(y), i(x) {}
+    int road;
+    loc *next;
+    loc(int y, int x, int r = 0): j(y), i(x), road(r), next(nullptr) {}
+//    void update_road(int n) { road = n; }
+    loc operator++() { ++road; return *this; }
+    loc operator--() { --road; return *this; }
     friend bool operator==(const loc& lft, const loc& rht) {
         return (lft.i == rht.i && lft.j == rht.j);
     }
     friend bool operator!=(const loc& lft, const loc& rht) {
         return !(lft == rht);
     }
+    friend ostream& operator<<(ostream& os, const loc& l) {
+        os << "(" << l.j << "," << l.i << ") -> ";
+        return os;
+    }
 };
+
+class LocStack {
+    loc *top;
+public:
+    LocStack(): top(nullptr) {}
+    void add(const loc& l);
+    bool pop();
+    bool isEmpty();
+    loc getTopVal();
+};
+
+void LocStack::add(const loc &l) {
+    loc *nl = new loc(l.j, l.i, l.road);
+    nl->next = top;
+    top = nl;
+}
+
+bool LocStack::pop() {
+    if (top) {
+        loc *tl = top;
+        top = top->next;
+        delete tl;
+        return true;
+    } else return false;
+}
+
+bool LocStack::isEmpty() {
+    return top == nullptr;
+}
+
+loc LocStack::getTopVal() {
+    return *top;
+}
+
 class killMaze {
     vector<vector<int>> map;
     loc entrance, exit;
     int wid, hgt;
-    vector<pair<loc, int>> pathLog;
+    LocStack pathLog;
+    void cur_loc_chk(loc&);
 public:
     killMaze(const vector<vector<int>>& m, loc entr, loc ex);
     void display();
     bool getPath();
-    int current_loc_status(const loc&);
+    void viewPath();
     bool goUp(loc&);
     bool goDown(loc&);
     bool goLeft(loc&);
     bool goRight(loc&);
 };
+
+void killMaze::cur_loc_chk(loc& l) {
+    if (map[l.j - 1][l.i] == 0)
+        ++l;
+    if (map[l.j][l.i + 1] == 0)
+        ++l;
+    if (map[l.j + 1][l.i] == 0)
+        ++l;
+    if (map[l.j][l.i - 1] == 0)
+        ++l;
+}
 
 killMaze::killMaze(const vector<vector<int>>& m, loc entr, loc ex):
     map(m), entrance(entr), exit(ex) {
@@ -73,8 +128,10 @@ void killMaze::display() {
         for (int x = 0; x < wid; ++x)
             if (map[y][x] == 1)
                 cout << "▉";
-            else if (map[y][x] == 0 || map[y][x] == 3)
+            else if (map[y][x] == 0)
                 cout << ' ';
+            else if (map[y][x] == 3)
+                cout << '-';
             else
                 cout << "+";
         cout << endl;
@@ -83,55 +140,52 @@ void killMaze::display() {
 
 bool killMaze::getPath() {
     loc start = entrance;
-    int ways = current_loc_status(start);
-    pathLog.push_back(make_pair(start, ways));
     while (start != exit) {
-        if (goUp(start)) {
-            --pathLog[pathLog.size() - 1].second;
-            pathLog.push_back(make_pair(start, current_loc_status(start)));
-        }
-        else if (goRight(start)) {
-            --pathLog[pathLog.size() - 1].second;
-            pathLog.push_back(make_pair(start, current_loc_status(start)));
-        }
-        else if (goDown(start)) {
-            --pathLog[pathLog.size() - 1].second;
-            pathLog.push_back(make_pair(start, current_loc_status(start)));
-        }
-        else if (goLeft(start)) {
-            --pathLog[pathLog.size() - 1].second;
-            pathLog.push_back(make_pair(start, current_loc_status(start)));
+        loc pre = start;
+        if (goUp(start) || goRight(start) || goDown(start) || goLeft(start)){
+            cur_loc_chk(pre);
+            pathLog.add(pre);
+            pre = start;
         }
         else {
-            map[start.j][start.i] = 2;
-            while (pathLog[pathLog.size() - 1].second == 0) {
-                start = pathLog[pathLog.size() - 1].first;
-                map[start.j][start.i] = 3;
-                pathLog.pop_back();
-                if (pathLog.size() == 1 && pathLog[0].second == 0) {
+            map[start.j][start.i] = 3;
+            do {
+                if (pathLog.isEmpty()){
                     cerr << "No Way\n";
                     return false;
-                }
-            }
-            start = pathLog[pathLog.size() - 1].first;
+                 } else if (pathLog.getTopVal().road <= 0) {
+                    map[pathLog.getTopVal().j][pathLog.getTopVal().i] = 3;
+                    pathLog.pop();
+                } else break;
+                display();
+            } while (1);
+            start = pathLog.getTopVal();
+            pathLog.pop();
         }
-        //sleep(1);
+        usleep(1000);
         system("clear");
         display();
     }
+    cout << "WIN!\n";
     return true;
 }
-int killMaze::current_loc_status(const loc& l) {
-    int n = 0;
-    if (map[l.j - 1][l.i] == 0)
-        ++n;
-    if (map[l.j][l.i + 1] == 0)
-        ++n;
-    if (map[l.j + 1][l.i] == 0)
-        ++n;
-    if (map[l.j][l.i - 1] == 0)
-        ++n;
-    return n;
+
+void killMaze::viewPath() {
+    LocStack reverse;
+    while (!pathLog.isEmpty()) {
+        reverse.add(pathLog.getTopVal());
+        pathLog.pop();
+    }
+    int n = 6;
+    while (!reverse.isEmpty()) {
+        if (--n == 0) {
+            cout << endl;
+            n = 6;
+        }
+        cout << reverse.getTopVal();
+        reverse.pop();
+    }
+    cout << endl;
 }
 
 bool killMaze::goUp(loc& l) {
