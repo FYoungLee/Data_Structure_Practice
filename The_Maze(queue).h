@@ -19,7 +19,7 @@ struct loc {
     int j, i;
     int road;
     loc *next;
-    loc *pre;
+    loc *pre; //the record for previous step node.
     loc(int y, int x, int r = 0): j(y), i(x), road(r), next(nullptr), pre(nullptr) {}
     loc(const loc& l): j(l.j), i(l.i), road(l.road), next(nullptr), pre(l.pre) {}
     loc operator++() { ++road; return *this; }
@@ -45,11 +45,11 @@ public:
     ~LocQueue();
     void push(const loc&);
     bool deque();
-    void add_pre(loc *pl);
+    void add_pre(loc *pl); // record previous node.
     loc *getStep() { return step; }
     void nextStep() { step = step->next; }
-    const loc* stepToExit();
-    const loc* stepPre();
+    const loc* stepToExit();    //when finished path use this method to make step pointer point to last node.
+    const loc* stepPre();   //depend on record this method will find previous step node.
 };
 
 LocQueue::LocQueue(): rear(nullptr), step(nullptr) {}
@@ -74,7 +74,7 @@ void LocQueue::push(const loc& l) {
 
 bool LocQueue::deque() {
     if (!rear) return false;
-    if (rear != rear->next) {
+    if (rear != rear->next) {       //this condition is important for checking if there is only one node in queue.
         loc *p = rear->next;
         rear->next = p->next;
         delete p;
@@ -160,23 +160,11 @@ bool killMaze::getPath() {
     while (start != exit) {
         p = pathLog.getStep();
         start = *p;
-        if (goUp(start)) {
+        if (goUp(start) || goRight(start) || goDown(start) || goLeft(start)){
             pathLog.push(start);
             pathLog.add_pre(p);
-        } else if (goRight(start)) {
-            pathLog.push(start);
-            pathLog.add_pre(p);
-        } else if (goDown(start)) {
-            pathLog.push(start);
-            pathLog.add_pre(p);
-        } else if (goLeft(start)) {
-            pathLog.push(start);
-            pathLog.add_pre(p);
-        } else
+        } else                      // if there is nowhere to go, then make step pointer point to next node.
             pathLog.nextStep();
-        //sleep(1);
-        //system("clear");
-        display();
     }
     viewPath();
     cout << "WIN!\n";
