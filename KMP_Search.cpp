@@ -1,5 +1,5 @@
 size_t KMP_Search(const string& str, const string& exp) {
-    /* this part is get the KMP code from 'exp': */
+    /* this part gets the KMP code from 'exp': */
     size_t *code = new size_t;
     code[0] = code[1] = 0;
     for (size_t i = 1; i < exp.size()-1; ++i) {
